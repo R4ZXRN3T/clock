@@ -7,6 +7,8 @@
 //! Time can be specified using units: h, min/m, s, ms, µs/us, ns
 
 use std::ops::Sub;
+use std::sync::Arc;
+use std::sync::atomic::{AtomicBool, Ordering};
 use std::thread;
 use std::time::{Duration, SystemTime};
 
@@ -23,12 +25,16 @@ use std::time::{Duration, SystemTime};
 fn main() -> Result<(), &'static str> {
 	let args = std::env::args().collect::<Vec<String>>();
 	if args.len() < 2 {
+		println!("Error: No arguments provided.");
+		display_information();
 		return Err("Error: Invalid argument count.");
 	}
 	if (args[1] != "stopwatch" && args[1] != "timer")
 		|| (args[1] == "timer" && args.len() < 3)
 		|| (args[1] == "timer" && parse_time(args[2].clone()).is_err())
 	{
+		println!("Error: Invalid argument count.");
+		display_information();
 		return Err("Error: Invalid arguments");
 	}
 
@@ -37,6 +43,8 @@ fn main() -> Result<(), &'static str> {
 	} else if args[1] == "timer" {
 		timer(parse_time(args[2].clone())?)
 	} else {
+		println!("Error: Unknown error (How did this even happen?)");
+		display_information();
 		Err("Error: Unknown Error (How did this even happen?)")
 	}
 }
@@ -46,10 +54,25 @@ fn main() -> Result<(), &'static str> {
 /// Displays elapsed time continuously, updating at approximately 60 FPS.
 /// The timer runs indefinitely until the process is terminated.
 fn stopwatch() {
+	let running = Arc::new(AtomicBool::new(true));
+	let r = running.clone();
+	ctrlc::set_handler(move || {
+		r.store(false, Ordering::SeqCst);
+	})
+	.expect("Error setting Ctrl-C handler");
+
+	let running_input = running.clone();
+	thread::spawn(move || {
+		let mut input = String::new();
+		std::io::stdin().read_line(&mut input).ok();
+		running_input.store(false, Ordering::SeqCst);
+	});
+
 	let start_time = SystemTime::now();
 	let delay = Duration::from_millis(16); // around 60fps
+	println!("Press Ctrl-C or Enter to stop the stopwatch.");
 	print!("\x1b[s"); // Save cursor position
-	loop {
+	while running.load(Ordering::SeqCst) {
 		print!("\x1b[u\x1b[0J"); // Restore cursor and clear
 		println!("time: {}", format_duration(start_time.elapsed().unwrap()));
 		thread::sleep(delay);
@@ -67,20 +90,31 @@ fn stopwatch() {
 /// # Display
 /// Updates at approximately 60 FPS, showing remaining time.
 fn timer(duration: Duration) -> Result<(), &'static str> {
+	// In stopwatch() and timer():
+	let running = Arc::new(AtomicBool::new(true));
+	let r = running.clone();
+	ctrlc::set_handler(move || {
+		r.store(false, Ordering::SeqCst);
+	})
+	.expect("Error setting Ctrl-C handler");
+
 	let delay = Duration::from_millis(16); // around 60fps
 	if duration.is_zero() {
 		return Err("Time is zero");
 	}
 	let start_time = SystemTime::now();
 	print!("\x1b[s"); // Save cursor position
-	while start_time.elapsed().unwrap() < duration {
+	while running.load(Ordering::SeqCst) && start_time.elapsed().unwrap() < duration {
 		print!("\x1b[u\x1b[0J"); // Restore cursor and clear
 		println!(
-			"time: {}",
+			"time remaining: {}",
 			format_duration(duration.sub(start_time.elapsed().unwrap()))
 		);
 		thread::sleep(delay);
 	}
+	print!("\x1b[u\x1b[0J");
+	println!("\n⏰ Timer finished!");
+	print!("\x07");
 	Ok(())
 }
 
@@ -199,4 +233,13 @@ fn format_duration(duration: Duration) -> String {
 	} else {
 		parts.join(" ")
 	}
+}
+
+fn display_information() {
+	println!("Usage:");
+	println!("  clock stopwatch");
+	println!("  clock timer <duration>");
+	println!("\nExamples:");
+	println!("  clock timer 5m 30s");
+	println!("  clock timer 1h");
 }
