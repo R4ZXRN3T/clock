@@ -58,14 +58,10 @@ jobs:
 
       - name: Extract version
         id: version
+        shell: bash
         run: |
-          if [ "${{ runner.os }}" == "Windows" ]; then
-            VERSION=$(cargo metadata --format-version 1 | jq -r ".packages[] | select(.name==\"clock\") | .version")
-            echo "version=$VERSION" >> $env:GITHUB_OUTPUT
-          else
-            VERSION=$(cargo metadata --format-version 1 | jq -r ".packages[] | select(.name==\"clock\") | .version")
-            echo "version=$VERSION" >> $GITHUB_OUTPUT
-          fi
+          VERSION=$(cargo metadata --format-version 1 | jq -r ".packages[] | select(.name==\"clock\") | .version")
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
