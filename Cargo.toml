@@ -1,6 +1,12 @@
 [package]
 name = "clock"
+authors = ["R4ZXRN3T"]
 version = "1.0.0"
+license = "GPL-3"
+license-file = "LICENSE"
+description = "A simple cli tool, providing a timer and a stopwatch."
+repository = "https://github.com/R4ZXRN3T/clock"
+readme = "README.md"
 edition = "2024"
 
 [dependencies]

@@ -4,15 +4,28 @@ A lightweight, high-performance command-line stopwatch and timer utility written
 
 ## Features
 
-- **Stopwatch Mode**: Continuously count elapsed time from start
-- **Timer Mode**: Count down from a specified duration
+- **Stopwatch Mode**: Continuously count elapsed time from start with Ctrl-C or Enter to stop
+- **Timer Mode**: Count down from a specified duration with completion notification (visual and audio)
 - **Flexible Time Input**: Support for multiple time units (hours, minutes, seconds, milliseconds, microseconds, nanoseconds)
+- **Precise Timing**: Displays time with nanosecond precision
+
+## Installation
+
+There are multiple ways to install Clock:
+
+1. **Precompiled Binaries**: Download the latest release from the [GitHub Releases](https://github.com/R4ZXRN3T/clock/releases)
+2. **Compile it yourself**: See the [Building](#building) section below for instructions on how to build from source using Rust.
+3. **Get it on the AUR**: If you're using an Arch-based Linux distribution, you can install Clock from the Arch User Repository (AUR) using an AUR helper like `yay`:
+
+```bash
+yay -S clock
+```
 
 ## Usage
 
 ### Stopwatch
 
-Start a stopwatch that counts up from zero:
+Start a stopwatch that counts up from zero. Press Ctrl-C or Enter to stop:
 
 ```bash
 ./clock stopwatch
@@ -20,7 +33,7 @@ Start a stopwatch that counts up from zero:
 
 ### Timer
 
-Start a timer that counts down from a specified duration:
+Start a timer that counts down from a specified duration. When complete, you'll see a notification message and hear a beep:
 
 ```bash
 ./clock timer <duration>
@@ -49,18 +62,19 @@ The duration supports various time units that can be combined:
 
 ## Building
 
+### Requirements
+
+- Rust (for building)
+- UPX (for ultra-compact binary compression, only used on linux)
+- Make (for build automation)
+- A compatible C linker (e.g., `gcc` or `clang` (`msvc` or `MinGW` on Windows))
+
 ### Standard Build
 
-```bash
-cargo build --release
-```
-
-### Optimized Build
-
-For minimal binary size, use the provided build script:
+To build the project, run:
 
 ```bash
-./build.sh
+   make
 ```
 
 This script uses:
@@ -69,19 +83,16 @@ This script uses:
 - Link-time optimization (LTO)
 - UPX compression for ultra-compact binaries
 
-The optimized binary is output to `./final/clock-0.1.0-Linux-x86_64/clock`
-
-## Requirements
-
-- Rust (for building)
-- UPX (for ultra-compact binary compression, optional)
+The optimized binary is output to `./final/clock-<version>-<OS>-<architecture>/clock` (`clock.exe` on Windows).
 
 ## Technical Details
 
 - **Display Refresh**: ~60fps (16ms intervals) for smooth visual updates
 - **Terminal Control**: Uses ANSI escape sequences for cursor positioning and clearing
-- **Precision**: Displays time with nanosecond precision
+- **Precision**: Displays time with nanosecond precision (hours, minutes, seconds, milliseconds, microseconds, nanoseconds)
+- **Completion Notification**: Timer completion includes visual message and audio beep (bell character)
 - **Memory Efficient**: Minimal memory footprint with optimized build options
+- **Signal Handling**: Graceful shutdown with Ctrl-C handler in both modes
 
 ## License
 
