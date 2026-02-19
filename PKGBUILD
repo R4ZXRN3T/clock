@@ -8,7 +8,7 @@ url='https://github.com/R4ZXRN3T/clock'
 license=('GPL-3.0-or-later')
 depends=()
 makedepends=('git' 'rustup' 'upx' 'base-devel')
-source=("$pkgname-$pkgver.tar.gz::https://github.com/R4ZXRN3T/clock/archives/refs/tags/$pkgver.tar.gz")
+source=("$pkgname-$pkgver.tar.gz::https://github.com/R4ZXRN3T/clock/archive/refs/tags/$pkgver.tar.gz")
 sha256sums=('SKIP')
 
 prepare() {
