@@ -1,0 +1,63 @@
+name: Build Multi-Architecture Binaries
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: Build ${{ matrix.os }} - ${{ matrix.arch }}
+    runs-on: ${{ matrix.runner }}
+    strategy:
+      matrix:
+        include:
+          - os: Linux
+            runner: ubuntu-latest
+            arch: x86_64
+            script: bash scripts/build-linux.sh
+          - os: Linux
+            runner: ubuntu-latest
+            arch: aarch64
+            script: bash scripts/build-linux.sh
+            setup: |
+              sudo apt-get update
+              sudo apt-get install -y gcc-aarch64-linux-gnu
+          - os: macOS
+            runner: macos-latest
+            arch: x86_64
+            script: bash scripts/build-macos.sh
+          - os: macOS
+            runner: macos-latest
+            arch: aarch64
+            script: bash scripts/build-macos.sh
+          - os: Windows
+            runner: windows-latest
+            arch: x86_64
+            script: powershell -ExecutionPolicy Bypass -File scripts/build-windows.ps1
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@nightly
+        with:
+          targets: ${{ matrix.target }}
+
+      - name: Setup environment
+        if: matrix.setup
+        run: ${{ matrix.setup }}
+
+      - name: Install UPX (Linux)
+        if: runner.os == 'Linux'
+        run: sudo apt-get install -y upx
+
+      - name: Build
+        run: ${{ matrix.script }}
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: clock-${{ matrix.os }}-${{ matrix.arch }}
+          path: ./final/
