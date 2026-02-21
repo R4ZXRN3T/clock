@@ -1,5 +1,5 @@
 $PKGNAME = "clock"
-$PKGVERSION = (cargo metadata --format-version 1 | jq -r ".packages[] | select(.name == `"$PKGNAME`") | .version")
+$PKGVERSION = (cargo metadata --format-version 1 | jq -r ".packages[] | select(.name==`"`"$PKGNAME`"`") | .version")
 $ARCH = $env:PROCESSOR_ARCHITECTURE
 
 Remove-Item -Path ".\final\$PKGNAME-$PKGVERSION-Windows-$ARCH" -Recurse -Force -ErrorAction SilentlyContinue
