@@ -71,20 +71,8 @@ jobs:
           VERSION=$(cargo metadata --format-version 1 | jq -r ".packages[] | select(.name==\"clock\") | .version")
           echo "version=$VERSION" >> $GITHUB_OUTPUT
 
-      - name: Create archive
-        shell: bash
-        run: |
-          cd final
-          DIR_NAME=$(ls -d clock-* | head -n 1)
-          if [ "$RUNNER_OS" == "Windows" ]; then
-            powershell -Command "Compress-Archive -Path '$DIR_NAME/*' -DestinationPath '$DIR_NAME.zip'"
-          else
-            cd "$DIR_NAME"
-            zip -r "../$DIR_NAME.zip" .
-          fi
-
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
           name: clock-${{ steps.extract.outputs.version }}-${{ matrix.os }}-${{ matrix.arch }}
-          path: ./final/*.zip
+          path: ./final/**/
