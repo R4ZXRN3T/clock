@@ -1,6 +1,15 @@
+#Requires -Version 7
+
+rustup override set nightly
+
 $PKGNAME = "clock"
-$PKGVERSION = (cargo metadata --format-version 1 | jq -r ".packages[] | select(.name==`"`"$PKGNAME`"`") | .version")
-$ARCH = $env:PROCESSOR_ARCHITECTURE
+$PKGVERSION = (cargo metadata --format-version 1 | jq -r ".packages[] | select(.name==`"$PKGNAME`") | .version")
+$ARCH = switch ((cmd /c echo %PROCESSOR_ARCHITECTURE%)) {
+	"AMD64" {"x86_64"}
+	"ARM64" {"aarch64"}
+	"X86" {"i686"}
+	default {"unknown"}
+}
 
 Remove-Item -Path ".\final\$PKGNAME-$PKGVERSION-Windows-$ARCH" -Recurse -Force -ErrorAction SilentlyContinue
 

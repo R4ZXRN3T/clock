@@ -8,7 +8,7 @@ ifeq ($(UNAME_S),Linux)
 else ifeq ($(UNAME_S),Darwin)
 	@bash scripts/build-macos.sh
 else ifeq ($(OS),Windows_NT)
-	@powershell -ExecutionPolicy Bypass -File scripts/build-windows.ps1
+	@pwsh -ExecutionPolicy Bypass -File scripts/build-windows.ps1
 else
 	@echo "Unsupported operating system"
 	@exit 1
