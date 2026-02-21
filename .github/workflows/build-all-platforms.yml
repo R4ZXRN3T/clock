@@ -72,8 +72,8 @@ jobs:
           echo "version=$VERSION" >> $GITHUB_OUTPUT
 
       - name: Upload artifacts
-        run: cd final/clock-*/
         uses: actions/upload-artifact@v4
         with:
           name: clock-${{ steps.extract.outputs.version }}-${{ matrix.os }}-${{ matrix.arch }}.zip
-          path: ./clock*
+          path: final/clock-**/clock*
+          compression-level: '9'
