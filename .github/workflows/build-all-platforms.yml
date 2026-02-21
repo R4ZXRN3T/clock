@@ -64,22 +64,26 @@ jobs:
       - name: Build
         run: ${{ matrix.script }}
 
-      - name: Extract version and architecture
+      - name: Extract version
         id: extract
         shell: bash
         run: |
           VERSION=$(cargo metadata --format-version 1 | jq -r ".packages[] | select(.name==\"clock\") | .version")
           echo "version=$VERSION" >> $GITHUB_OUTPUT
 
+      - name: Create archive
+        shell: bash
+        run: |
+          cd final
+          DIR_NAME=$(ls -d clock-* | head -n 1)
           if [ "$RUNNER_OS" == "Windows" ]; then
-            ARCH=$(powershell -Command "switch ((cmd /c echo %PROCESSOR_ARCHITECTURE%)) { 'AMD64' {'x86_64'} 'ARM64' {'aarch64'} 'X86' {'i686'} default {'unknown'} }")
+            powershell -Command "Compress-Archive -Path '$DIR_NAME' -DestinationPath '$DIR_NAME.zip'"
           else
-            ARCH=$(uname -m)
+            zip -r "$DIR_NAME.zip" "$DIR_NAME"
           fi
-          echo "arch=$ARCH" >> $GITHUB_OUTPUT
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: clock-${{ steps.extract.outputs.version }}-${{ matrix.os }}-${{ steps.extract.outputs.arch }}
-          path: ./final/clock-${{ steps.extract.outputs.version }}-${{ matrix.os }}-${{ steps.extract.outputs.arch }}
+          name: clock-${{ steps.extract.outputs.version }}-${{ matrix.os }}-${{ matrix.arch }}
+          path: ./final/*.zip
