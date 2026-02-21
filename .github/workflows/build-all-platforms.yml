@@ -36,6 +36,10 @@ jobs:
             runner: windows-latest
             arch: x86_64
             script: pwsh -ExecutionPolicy Bypass -File scripts/build-windows.ps1
+          - os: Windows
+            runner: windows-latest
+            arch: aarch64
+            script: pwsh -ExecutionPolicy Bypass -File scripts/build-windows.ps1
 
     steps:
       - uses: actions/checkout@v4
@@ -60,15 +64,22 @@ jobs:
       - name: Build
         run: ${{ matrix.script }}
 
-      - name: Extract version
-        id: version
+      - name: Extract version and architecture
+        id: extract
         shell: bash
         run: |
           VERSION=$(cargo metadata --format-version 1 | jq -r ".packages[] | select(.name==\"clock\") | .version")
           echo "version=$VERSION" >> $GITHUB_OUTPUT
 
+          if [ "$RUNNER_OS" == "Windows" ]; then
+            ARCH=$(powershell -Command "switch ((cmd /c echo %PROCESSOR_ARCHITECTURE%)) { 'AMD64' {'x86_64'} 'ARM64' {'aarch64'} 'X86' {'i686'} default {'unknown'} }")
+          else
+            ARCH=$(uname -m)
+          fi
+          echo "arch=$ARCH" >> $GITHUB_OUTPUT
+
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: clock-${{ steps.version.outputs.version }}-${{ matrix.os }}-${{ matrix.arch }}
-          path: ./final/clock-${{ steps.version.outputs.version }}-${{ matrix.os }}-${{ matrix.arch }}
+          name: clock-${{ steps.extract.outputs.version }}-${{ matrix.os }}-${{ steps.extract.outputs.arch }}
+          path: ./final/clock-${{ steps.extract.outputs.version }}-${{ matrix.os }}-${{ steps.extract.outputs.arch }}
