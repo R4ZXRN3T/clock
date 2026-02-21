@@ -77,9 +77,10 @@ jobs:
           cd final
           DIR_NAME=$(ls -d clock-* | head -n 1)
           if [ "$RUNNER_OS" == "Windows" ]; then
-            powershell -Command "Compress-Archive -Path '$DIR_NAME' -DestinationPath '$DIR_NAME.zip'"
+            powershell -Command "Compress-Archive -Path '$DIR_NAME/*' -DestinationPath '$DIR_NAME.zip'"
           else
-            zip -r "$DIR_NAME.zip" "$DIR_NAME"
+            cd "$DIR_NAME"
+            zip -r "../$DIR_NAME.zip" .
           fi
 
       - name: Upload artifacts
