@@ -35,10 +35,14 @@ jobs:
           - os: Windows
             runner: windows-latest
             arch: x86_64
-            script: powershell -ExecutionPolicy Bypass -File scripts/build-windows.ps1
+            script: pwsh -ExecutionPolicy Bypass -File scripts/build-windows.ps1
 
     steps:
       - uses: actions/checkout@v4
+
+      - name: Install PowerShell
+        if: runner.os == 'Windows'
+        uses: PSModule/install-powershell@v1
 
       - name: Install Rust
         uses: dtolnay/rust-toolchain@nightly
