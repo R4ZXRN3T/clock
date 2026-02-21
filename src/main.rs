@@ -6,9 +6,13 @@
 //!
 //! Time can be specified using units: h, min/m, s, ms, µs/us, ns
 
+use crossterm::style::Print;
+use crossterm::terminal::{Clear, ClearType};
+use crossterm::{cursor, execute, queue};
+use std::io::{stdout, Write};
 use std::ops::Sub;
-use std::sync::Arc;
 use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::Arc;
 use std::thread;
 use std::time::{Duration, SystemTime};
 
@@ -71,10 +75,26 @@ fn stopwatch() {
 	let start_time = SystemTime::now();
 	let delay = Duration::from_millis(16); // around 60fps
 	println!("Press Ctrl-C or Enter to stop the stopwatch.");
-	print!("\x1b[s"); // Save cursor position
+	let mut stdout = stdout();
+	execute!(stdout, cursor::SavePosition).unwrap();
+	println!("Press Ctrl-C or Enter to stop the stopwatch.");
+
 	while running.load(Ordering::SeqCst) {
-		print!("\x1b[u\x1b[0J"); // Restore cursor and clear
-		println!("time: {}", format_duration(start_time.elapsed().unwrap()));
+		queue!(
+			stdout,
+			cursor::RestorePosition,
+			Clear(ClearType::FromCursorDown)
+		)
+		.unwrap();
+		queue!(
+			stdout,
+			Print(format!(
+				"time: {}",
+				format_duration(start_time.elapsed().unwrap())
+			))
+		)
+		.unwrap();
+		stdout.flush().unwrap();
 		thread::sleep(delay);
 	}
 }
@@ -98,23 +118,44 @@ fn timer(duration: Duration) -> Result<(), &'static str> {
 	})
 	.expect("Error setting Ctrl-C handler");
 
-	let delay = Duration::from_millis(16); // around 60fps
+	let delay = Duration::from_millis(1); // around 60fps
 	if duration.is_zero() {
 		return Err("Time is zero");
 	}
 	let start_time = SystemTime::now();
-	print!("\x1b[s"); // Save cursor position
+	let mut stdout = stdout();
+	execute!(stdout, cursor::SavePosition).unwrap();
+
 	while running.load(Ordering::SeqCst) && start_time.elapsed().unwrap() < duration {
-		print!("\x1b[u\x1b[0J"); // Restore cursor and clear
-		println!(
-			"time remaining: {}",
-			format_duration(duration.sub(start_time.elapsed().unwrap()))
-		);
+		queue!(
+			stdout,
+			cursor::RestorePosition,
+			Clear(ClearType::FromCursorDown)
+		)
+		.unwrap();
+		queue!(
+			stdout,
+			Print(format!(
+				"time remaining: {}",
+				format_duration(duration.sub(start_time.elapsed().unwrap()))
+			))
+		)
+		.unwrap();
+		stdout.flush().unwrap();
 		thread::sleep(delay);
 	}
-	print!("\x1b[u\x1b[0J");
-	println!("\n⏰ Timer finished!");
-	print!("\x07");
+
+	queue!(
+		stdout,
+		cursor::RestorePosition,
+		Clear(ClearType::FromCursorDown)
+	)
+	.unwrap();
+	queue!(stdout, Print("\n⏰ Timer finished!\n")).unwrap();
+	queue!(stdout, Print('\x07')).unwrap();
+
+	stdout.flush().unwrap();
+
 	Ok(())
 }
 
